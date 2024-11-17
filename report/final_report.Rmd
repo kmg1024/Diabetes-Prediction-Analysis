@@ -1,0 +1,226 @@
+---
+title: "Diabetes Prediction Analysis"
+author: "Mi Yan"
+date: "2024-10-06"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+# Introduction
+
+The dataset used in this analysis originates from the **National Institute of Diabetes and Digestive and Kidney Diseases**. It aims to diagnostically predict whether a patient has diabetes based on various diagnostic measurements. All patients in this dataset are females, at least 21 years old, and of Pima Indian heritage. 
+
+**Dataset Description:**
+
+- **Pregnancies**: Number of pregnancies the patient has had.
+- **Glucose**: Plasma glucose concentration a 2 hours in an oral glucose tolerance test.
+- **BloodPressure**: Diastolic blood pressure (mm Hg).
+- **SkinThickness**: Triceps skin fold thickness (mm).
+- **Insulin**: 2-Hour serum insulin (mu U/ml).
+- **BMI**: Body mass index (weight in kg/(height in m)^2).
+- **DiabetesPedigreeFunction**: A function which scores likelihood of diabetes based on family history.
+- **Age**: Age of the patient (years).
+- **Outcome**: Class variable (0: No diabetes, 1: Diabetes)
+
+**Analysis Objectives:**
+
+1. Explore the distribution and relationships of the predictor variables.
+2. Summarize key statistics to understand the dataset.
+3. Visualize the relationship between key variables and the diabetes outcome.
+4. Clean and preprocess the data to handle anomalies and missing values.
+
+# Loading the Data
+
+```{r load-data, echo=TRUE}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(readr)
+library(kableExtra)
+library(ggcorrplot)
+
+# Load the dataset
+diabetes_data <- read_csv("D:/RToolkit/diabetes.csv")
+
+# Display the first few rows of the dataset
+head(diabetes_data)
+```
+
+# Cleaning the Data
+```{r}
+# Identify columns where 0 is an invalid value
+columns_with_zero_invalid <- c("Glucose", "BloodPressure", "SkinThickness",
+                               "Insulin", "BMI")
+
+# Replace 0s with NA in the identified columns
+diabetes_data <- diabetes_data %>%
+  mutate(across(all_of(columns_with_zero_invalid), ~ ifelse(. == 0, NA, .)))
+
+# Check the number of missing values in each column
+missing_values <- sapply(diabetes_data, function(x) sum(is.na(x)))
+missing_values
+
+# Impute missing values (e.g., using median)
+diabetes_data_clean <- diabetes_data %>%
+  mutate(
+    Glucose = ifelse(is.na(Glucose), median(Glucose, na.rm = TRUE), Glucose),
+    BloodPressure = ifelse(is.na(BloodPressure), median(BloodPressure, 
+                                                        na.rm = TRUE), BloodPressure),
+    SkinThickness = ifelse(is.na(SkinThickness), median(SkinThickness, 
+                                                        na.rm = TRUE), SkinThickness),
+    Insulin = ifelse(is.na(Insulin), median(Insulin, na.rm = TRUE), Insulin),
+    BMI = ifelse(is.na(BMI), median(BMI, na.rm = TRUE), BMI)
+  )
+
+# Verify that there are no more missing values
+sapply(diabetes_data_clean, function(x) sum(is.na(x)))
+```
+
+# Summary Statistics
+```{r}
+# Create summary statistics for selected variables
+summary_stats <- diabetes_data_clean %>%
+  select(Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, 
+         BMI, DiabetesPedigreeFunction, Age) %>%
+  summary()
+
+# Convert summary statistics to a data frame for better formatting
+summary_df <- as.data.frame(summary_stats)
+
+# Display the summary table with formatting
+kable(summary_df, caption = "Summary Statistics of Predictor Variables") %>%
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+The table above summarizes the central tendency and dispersion of the predictor variables. For instance, the average glucose level is 121.66 and the Median is 117.00, indicating variability among the patients' glucose levels.
+# Correlation Analysis
+
+Understanding the correlations between predictor variables is essential for identifying multicollinearity issues and uncovering potential relationships within the data. Below, we calculate and visualize the correlation matrix of the predictor variables.
+
+```{r}
+# Calculate the correlation matrix excluding the Outcome variable
+cor_matrix <- cor(diabetes_data_clean %>% select(-Outcome))
+
+
+ggcorrplot(cor_matrix, 
+           method = "circle", 
+           type = "lower", 
+           lab = TRUE, 
+           lab_size = 3, 
+           colors = c("#6D9EC1", "white", "#E46726"),
+           title = "Correlation Heatmap of Predictor Variables",
+           ggtheme = theme_minimal())
+```
+
+From the correlation heatmap, we observe that certain variables exhibit moderate to strong correlations. For example, Glucose and Insulin show a moderate positive correlation (correlation coefficient ≈ 0.4), while BMI and Age also display a positive correlation. These correlations are important to consider when building predictive models to avoid multicollinearity issues.
+
+# Visualizing Relationships Between Predictors and Outcome
+To gain deeper insights into how predictor variables relate to the diabetes outcome, we will create distribution plots and boxplots.
+
+```{r}
+# Glucose Levels by Outcome
+ggplot(diabetes_data_clean, aes(x = factor(Outcome), y = Glucose, 
+                                fill = factor(Outcome))) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4"), 
+                    labels = c("No Diabetes", "Diabetes")) +
+  labs(
+    title = "Distribution of Glucose Levels by Diabetes Outcome",
+    x = "Diabetes Outcome",
+    y = "Glucose Level",
+    fill = "Outcome"
+  ) +
+  theme_minimal()
+```
+
+As shown in Figure, patients diagnosed with diabetes (Outcome = 1) tend to have significantly higher glucose levels compared to those without diabetes (Outcome = 0). This indicates that elevated glucose levels are a strong indicator of diabetes.
+
+```{r}
+# BMI Distribution by Outcome
+ggplot(diabetes_data_clean, aes(x = factor(Outcome), y = BMI, 
+                                fill = factor(Outcome))) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4"), 
+                    labels = c("No Diabetes", "Diabetes")) +
+  labs(
+    title = "Distribution of BMI by Diabetes Outcome",
+    x = "Diabetes Outcome",
+    y = "Body Mass Index (BMI)",
+    fill = "Outcome"
+  ) +
+  theme_minimal()
+```
+
+Figure illustrates that individuals with diabetes generally have higher BMI values, aligning with clinical observations that higher BMI is a risk factor for developing diabetes.
+
+# Predictive Modeling
+To predict whether a patient has diabetes, we will build a logistic regression model using the cleaned dataset. This model uses all predictor variables to estimate the probability of diabetes.
+```{r}
+# Building the Logistic Regression Model
+logistic_model <- glm(Outcome ~ ., data = diabetes_data_clean, family = binomial)
+
+# View the model summary
+summary(logistic_model)
+```
+The model summary provides coefficients for each predictor variable, indicating their relationship with the probability of having diabetes. Significant predictors (p-value < 0.05) are strong indicators of diabetes risk.
+
+# Model Evaluation
+We will evaluate the performance of the logistic regression model using a confusion matrix and calculate the accuracy of the model.
+
+```{r}
+# Predict probabilities
+pred_probs <- predict(logistic_model, type = "response")
+
+# Convert probabilities to binary classes using a threshold of 0.5
+pred_classes <- ifelse(pred_probs >= 0.5, 1, 0)
+
+# Create a confusion matrix
+conf_matrix <- table(Predicted = pred_classes, Actual = diabetes_data_clean$Outcome)
+
+# Calculate accuracy
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+
+# Display the confusion matrix
+kable(conf_matrix, caption = "Confusion Matrix") %>%
+  kable_styling(full_width = FALSE, position = "center")
+
+# Display accuracy
+cat("**Accuracy:**", round(accuracy * 100, 2), "%")
+```
+
+The confusion matrix and accuracy metric indicate that the model performs well in predicting diabetes outcomes. However, for a more comprehensive evaluation, additional metrics such as sensitivity, specificity, and the ROC curve are recommended.
+
+```{r}
+library(pROC)
+
+# Calculate ROC curve
+roc_obj <- roc(diabetes_data_clean$Outcome, pred_probs)
+
+# Plot ROC curve
+plot(roc_obj, col = "#00BFC4", main = "ROC Curve for Logistic Regression Model")
+abline(a = 0, b = 1, lty = 2, col = "red")
+
+# Calculate AUC
+auc_value <- auc(roc_obj)
+legend("bottomright", legend = paste("AUC =", 
+                                     round(auc_value, 3)), col = "#00BFC4", lwd = 2)
+```
+
+The ROC curve demonstrates that the model has good discriminative ability, with an AUC of 0.845. An AUC closer to 1 indicates excellent model performance, while an AUC of 0.5 suggests no discriminative ability.
+
+# Conclusion
+This analysis provides an initial exploration and predictive modeling of the diabetes dataset. Through data cleaning, we addressed anomalies by replacing unreasonable 0 values with median imputed values. Summary statistics and correlation analysis revealed key relationships among predictor variables. The logistic regression model demonstrated good accuracy and discriminative ability in predicting diabetes outcomes.
+
+Key Findings:
+
+1. Glucose Levels and BMI are significantly associated with diabetes outcomes, with higher values correlating with increased diabetes risk.
+2. Correlation Analysis identified moderate correlations between certain predictor variables, which is crucial to consider for multicollinearity in predictive modeling.
+3. Logistic Regression Model achieved an accuracy of r round(accuracy * 100, 2)% and an AUC of r round(auc_value, 3), indicating strong predictive performance.
+
+Future analyses can enhance model performance by exploring feature selection, employing regularization techniques, or utilizing more complex machine learning algorithms. Additionally, implementing cross-validation can provide a more robust assessment of the model's generalizability.
+
+
+# References
+National Institute of Diabetes and Digestive and Kidney Diseases. (n.d.). Diabetes Dataset. Retrieved from NIDDK

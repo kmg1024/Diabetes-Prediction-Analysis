@@ -1,0 +1,11 @@
+data/diabetes.csv
+
+.Rhistory
+.RData
+.Rproj.user/
+
+*.tmp
+*.log
+
+.DS_Store
+Thumbs.db
