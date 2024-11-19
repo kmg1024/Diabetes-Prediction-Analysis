@@ -1,6 +1,6 @@
 library(dplyr)
 
-diabetes_data <- readRDS("data/diabetes_data.RDS")
+diabetes_data <- readRDS("../data/diabetes_data.RDS")
 
 columns_with_zero_invalid <- c("Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI")
 
@@ -14,4 +14,4 @@ diabetes_data_clean <- diabetes_data %>%
     BMI = ifelse(is.na(BMI), median(BMI, na.rm = TRUE), BMI)
   )
 
-saveRDS(diabetes_data_clean, "data/diabetes_data_clean.RDS")
+saveRDS(diabetes_data_clean, "../data/diabetes_data_clean.RDS")

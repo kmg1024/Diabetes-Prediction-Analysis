@@ -1,7 +1,7 @@
 library(ggcorrplot)
 library(dplyr)
 
-diabetes_data_clean <- readRDS("data/diabetes_data_clean.RDS")
+diabetes_data_clean <- readRDS("../data/diabetes_data_clean.RDS")
 
 cor_matrix <- cor(diabetes_data_clean %>% select(-Outcome))
 
@@ -14,4 +14,4 @@ ggcorrplot(cor_matrix,
            title = "Correlation Heatmap of Predictor Variables",
            ggtheme = theme_minimal())
 
-ggsave("figures/correlation_heatmap.png")
+ggsave("../figures/correlation_heatmap.png")

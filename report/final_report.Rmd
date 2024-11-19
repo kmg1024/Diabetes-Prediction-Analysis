@@ -1,11 +1,15 @@
 ---
-title: "Diabetes Prediction Analysis"
+title: "Diabetes Prediction Analysis Report"
 author: "Mi Yan"
-date: "2024-10-06"
-output:
+date: "`r Sys.Date()`"
+output: 
   pdf_document:
     latex_engine: xelatex
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 # Introduction
 
@@ -42,7 +46,7 @@ library(kableExtra)
 library(ggcorrplot)
 
 # Load the dataset
-diabetes_data <- read_csv("D:/RToolkit/diabetes.csv")
+diabetes_data <- read_csv("../data/diabetes.csv")
 
 # Display the first few rows of the dataset
 head(diabetes_data)
@@ -50,47 +54,15 @@ head(diabetes_data)
 
 # Cleaning the Data
 ```{r}
-# Identify columns where 0 is an invalid value
-columns_with_zero_invalid <- c("Glucose", "BloodPressure", "SkinThickness",
-                               "Insulin", "BMI")
-
-# Replace 0s with NA in the identified columns
-diabetes_data <- diabetes_data %>%
-  mutate(across(all_of(columns_with_zero_invalid), ~ ifelse(. == 0, NA, .)))
-
-# Check the number of missing values in each column
-missing_values <- sapply(diabetes_data, function(x) sum(is.na(x)))
-missing_values
-
-# Impute missing values (e.g., using median)
-diabetes_data_clean <- diabetes_data %>%
-  mutate(
-    Glucose = ifelse(is.na(Glucose), median(Glucose, na.rm = TRUE), Glucose),
-    BloodPressure = ifelse(is.na(BloodPressure), median(BloodPressure, 
-                                                        na.rm = TRUE), BloodPressure),
-    SkinThickness = ifelse(is.na(SkinThickness), median(SkinThickness, 
-                                                        na.rm = TRUE), SkinThickness),
-    Insulin = ifelse(is.na(Insulin), median(Insulin, na.rm = TRUE), Insulin),
-    BMI = ifelse(is.na(BMI), median(BMI, na.rm = TRUE), BMI)
-  )
-
-# Verify that there are no more missing values
-sapply(diabetes_data_clean, function(x) sum(is.na(x)))
+source('../scripts/clean_data.R')
 ```
 
 # Summary Statistics
 ```{r}
 # Create summary statistics for selected variables
-summary_stats <- diabetes_data_clean %>%
-  select(Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, 
-         BMI, DiabetesPedigreeFunction, Age) %>%
-  summary()
+source('../scripts/summary_stats.R')
 
-# Convert summary statistics to a data frame for better formatting
-summary_df <- as.data.frame(summary_stats)
-
-# Display the summary table with formatting
-kable(summary_df, caption = "Summary Statistics of Predictor Variables") %>%
+kable(summary_df, format = "latex", caption = "Summary Statistics of Predictor Variables") %>%
   kable_styling(full_width = FALSE, position = "center")
 ```
 
@@ -101,17 +73,16 @@ Understanding the correlations between predictor variables is essential for iden
 
 ```{r}
 # Calculate the correlation matrix excluding the Outcome variable
-cor_matrix <- cor(diabetes_data_clean %>% select(-Outcome))
+source('../scripts/correlation_analysis.R')
 
-
-ggcorrplot(cor_matrix, 
-           method = "circle", 
-           type = "lower", 
-           lab = TRUE, 
-           lab_size = 3, 
-           colors = c("#6D9EC1", "white", "#E46726"),
-           title = "Correlation Heatmap of Predictor Variables",
-           ggtheme = theme_minimal())
+print(ggcorrplot(cor_matrix, 
+               method = "circle", 
+               type = "lower", 
+               lab = TRUE, 
+               lab_size = 3, 
+               colors = c("#6D9EC1", "white", "#E46726"),
+               title = "Correlation Heatmap of Predictor Variables",
+               ggtheme = theme_minimal()))
 ```
 
 From the correlation heatmap, we observe that certain variables exhibit moderate to strong correlations. For example, Glucose and Insulin show a moderate positive correlation (correlation coefficient ≈ 0.4), while BMI and Age also display a positive correlation. These correlations are important to consider when building predictive models to avoid multicollinearity issues.
@@ -120,38 +91,13 @@ From the correlation heatmap, we observe that certain variables exhibit moderate
 To gain deeper insights into how predictor variables relate to the diabetes outcome, we will create distribution plots and boxplots.
 
 ```{r}
-# Glucose Levels by Outcome
-ggplot(diabetes_data_clean, aes(x = factor(Outcome), y = Glucose, 
-                                fill = factor(Outcome))) +
-  geom_boxplot() +
-  scale_fill_manual(values = c("#F8766D", "#00BFC4"), 
-                    labels = c("No Diabetes", "Diabetes")) +
-  labs(
-    title = "Distribution of Glucose Levels by Diabetes Outcome",
-    x = "Diabetes Outcome",
-    y = "Glucose Level",
-    fill = "Outcome"
-  ) +
-  theme_minimal()
+source('../scripts/visualize_relationships.R')
+print(glucose_plot)
+
+print(bmi_plot)
 ```
 
 As shown in Figure, patients diagnosed with diabetes (Outcome = 1) tend to have significantly higher glucose levels compared to those without diabetes (Outcome = 0). This indicates that elevated glucose levels are a strong indicator of diabetes.
-
-```{r}
-# BMI Distribution by Outcome
-ggplot(diabetes_data_clean, aes(x = factor(Outcome), y = BMI, 
-                                fill = factor(Outcome))) +
-  geom_boxplot() +
-  scale_fill_manual(values = c("#F8766D", "#00BFC4"), 
-                    labels = c("No Diabetes", "Diabetes")) +
-  labs(
-    title = "Distribution of BMI by Diabetes Outcome",
-    x = "Diabetes Outcome",
-    y = "Body Mass Index (BMI)",
-    fill = "Outcome"
-  ) +
-  theme_minimal()
-```
 
 Figure illustrates that individuals with diabetes generally have higher BMI values, aligning with clinical observations that higher BMI is a risk factor for developing diabetes.
 
@@ -159,9 +105,8 @@ Figure illustrates that individuals with diabetes generally have higher BMI valu
 To predict whether a patient has diabetes, we will build a logistic regression model using the cleaned dataset. This model uses all predictor variables to estimate the probability of diabetes.
 ```{r}
 # Building the Logistic Regression Model
-logistic_model <- glm(Outcome ~ ., data = diabetes_data_clean, family = binomial)
+source('../scripts/predictive_modeling.R')
 
-# View the model summary
 summary(logistic_model)
 ```
 The model summary provides coefficients for each predictor variable, indicating their relationship with the probability of having diabetes. Significant predictors (p-value < 0.05) are strong indicators of diabetes risk.
@@ -170,43 +115,24 @@ The model summary provides coefficients for each predictor variable, indicating 
 We will evaluate the performance of the logistic regression model using a confusion matrix and calculate the accuracy of the model.
 
 ```{r}
-# Predict probabilities
+source('../scripts/model_evaluation.R')
+
 pred_probs <- predict(logistic_model, type = "response")
-
-# Convert probabilities to binary classes using a threshold of 0.5
 pred_classes <- ifelse(pred_probs >= 0.5, 1, 0)
-
-# Create a confusion matrix
 conf_matrix <- table(Predicted = pred_classes, Actual = diabetes_data_clean$Outcome)
-
-# Calculate accuracy
 accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
-
-# Display the confusion matrix
-kable(conf_matrix, caption = "Confusion Matrix") %>%
+kable(conf_matrix, format = "latex", caption = "Confusion Matrix") %>%
   kable_styling(full_width = FALSE, position = "center")
 
-# Display accuracy
-cat("**Accuracy:**", round(accuracy * 100, 2), "%")
+roc_obj <- roc(diabetes_data_clean$Outcome, pred_probs)
+auc_value <- auc(roc_obj)
+
+plot(roc_obj, col = "#00BFC4", main = "ROC Curve for Logistic Regression Model")
+abline(a = 0, b = 1, lty = 2, col = "red")
+legend("bottomright", legend = paste("AUC =", round(auc_value, 3)), col = "#00BFC4", lwd = 2)
 ```
 
 The confusion matrix and accuracy metric indicate that the model performs well in predicting diabetes outcomes. However, for a more comprehensive evaluation, additional metrics such as sensitivity, specificity, and the ROC curve are recommended.
-
-```{r}
-library(pROC)
-
-# Calculate ROC curve
-roc_obj <- roc(diabetes_data_clean$Outcome, pred_probs)
-
-# Plot ROC curve
-plot(roc_obj, col = "#00BFC4", main = "ROC Curve for Logistic Regression Model")
-abline(a = 0, b = 1, lty = 2, col = "red")
-
-# Calculate AUC
-auc_value <- auc(roc_obj)
-legend("bottomright", legend = paste("AUC =", 
-                                     round(auc_value, 3)), col = "#00BFC4", lwd = 2)
-```
 
 The ROC curve demonstrates that the model has good discriminative ability, with an AUC of 0.845. An AUC closer to 1 indicates excellent model performance, while an AUC of 0.5 suggests no discriminative ability.
 

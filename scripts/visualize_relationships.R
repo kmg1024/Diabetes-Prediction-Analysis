@@ -1,7 +1,7 @@
 library(ggplot2)
 library(dplyr)
 
-diabetes_data_clean <- readRDS("data/diabetes_data_clean.RDS")
+diabetes_data_clean <- readRDS("../data/diabetes_data_clean.RDS")
 
 glucose_plot <- ggplot(diabetes_data_clean, aes(x = factor(Outcome), y = Glucose, fill = factor(Outcome))) +
   geom_boxplot() +
@@ -14,7 +14,7 @@ glucose_plot <- ggplot(diabetes_data_clean, aes(x = factor(Outcome), y = Glucose
   ) +
   theme_minimal()
 
-ggsave("figures/glucose_boxplot.png", plot = glucose_plot)
+ggsave("../figures/glucose_boxplot.png", plot = glucose_plot)
 
 bmi_plot <- ggplot(diabetes_data_clean, aes(x = factor(Outcome), y = BMI, fill = factor(Outcome))) +
   geom_boxplot() +
@@ -27,4 +27,4 @@ bmi_plot <- ggplot(diabetes_data_clean, aes(x = factor(Outcome), y = BMI, fill =
   ) +
   theme_minimal()
 
-ggsave("figures/bmi_boxplot.png", plot = bmi_plot)
+ggsave("../figures/bmi_boxplot.png", plot = bmi_plot)

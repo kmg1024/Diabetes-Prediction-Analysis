@@ -9,3 +9,8 @@ data/diabetes.csv
 
 .DS_Store
 Thumbs.db
+
+figures/
+tables/
+
+report/final_report.pdf
