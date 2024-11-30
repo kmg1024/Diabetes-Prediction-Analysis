@@ -14,3 +14,7 @@ figures/
 tables/
 
 report/final_report.pdf
+
+.Rproj.user/
+
+renv/.Rprofile

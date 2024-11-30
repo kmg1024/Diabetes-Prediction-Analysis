@@ -55,6 +55,7 @@ Diabetes-Prediction-Analysis/
 │   └── final_report.pdf
 ├── Makefile
 ├── README.md
+├── renv.lock
 └── .gitignore
 
 ### Code Locations
@@ -101,53 +102,76 @@ Diabetes-Prediction-Analysis/
 - `kableExtra`
 - `ggcorrplot`
 - `pROC`
+- `renv`
 
 ## Installation
 
-1. Clone the Repository
+1. **Clone the Repository**
 
-```bash
-   git clone https://github.com/your-username/Diabetes-Prediction-Analysis.git
+   ```bash
+   git clone https://github.com/your_username/Diabetes-Prediction-Analysis.git
    cd Diabetes-Prediction-Analysis
-   
-2. Install Required R Packages
-You can install the necessary R packages by running the following command in R or RStudio:
-install.packages(c("ggplot2", "dplyr", "knitr", "readr", "kableExtra", "ggcorrplot", "pROC"))
+
+2. **Install Required R Packages**
+
+    ```bash
+    make install_packages
+    
+3. **Restore the Package Environment**
+
+    ```bash
+    make install
 
 ## Generating the Report
-The Makefile automates the process of building the final report.
 
 1. Run the Makefile to Generate the Report
-make report
 
-This command will:
+    ```bash
+    make report
 
-Automatically install any missing R packages.
-Generate all necessary figures and tables.
-Compile the final_report.Rmd into final_report.pdf.
-
-2. View the Report
-Open report/final_report.pdf to view the comprehensive analysis and model evaluation.
+2. Open report/final_report.pdf to view the comprehensive analysis and model evaluation.
 
 ## Cleaning Generated Files
-To remove all generated files such as figures, tables, models, and the final report PDF, run:
-make clean
+
+    ```bash
+    make clean
+    
+## Synchronizing the Package Environment
+
+1. Install Required Packages
+
+    ```bash
+    make install_packages
+
+2. Restore the Environment
+
+    ```bash
+    make install
 
 ## Contributing
-Contributions are welcome! Please follow these steps to contribute:
 
 1. Fork the Repository
+
 2. Create a New Branch
-git checkout -b feature/YourFeature
-3. git commit -m 'Add some feature'
-git commit -m 'Add some feature'
+
+    ```bash
+    git checkout -b feature/YourFeature
+    
+3. Commit Your Changes 
+
+    ```bash
+    git commit -m 'Add some feature'
+
 4. Push to the Branch
-git push origin feature/YourFeature
+    
+    ```bash
+    git push origin feature/YourFeature
+
 5. Open a Pull Request
 
-Contact
+## Contact
+
 For any questions or further information, please contact:
 
 Mi Yan
 Email: myan42@emory.edu
-
