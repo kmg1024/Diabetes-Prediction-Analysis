@@ -1,25 +1,38 @@
 REPORT = report/final_report.pdf
 RMD = report/final_report.Rmd
 
-PACKAGES = ggplot2 dplyr knitr readr kableExtra ggcorrplot pROC here renv
-
-all: install report
-
-install_packages:
-	Rscript -e "packages <- c($(PACKAGES)); new_packages <- packages[! (packages %in% installed.packages()[,'Package'])]; if(length(new_packages)) install.packages(new_packages, repos='http://cran.rstudio.com/')"
-
-install:
-	Rscript -e "renv::restore()"
-
-REPORT = report/final_report.pdf
-RMD = report/final_report.Rmd
+all: report
 
 report: $(REPORT)
 
-$(REPORT): $(RMD) scripts/*.R data/*.csv data/*.RDS renv.lock
-	Rscript -e "rmarkdown::render('$(RMD)', output_format='pdf_document')"
+$(REPORT): $(RMD) scripts/*.R data/*.csv data/*.RDS
+	docker run --rm \
+		-v "$(DOCKER_PATH)/report:/usr/src/app/report" \
+		-v "$(DOCKER_PATH)/scripts:/usr/src/app/scripts" \
+		-v "$(DOCKER_PATH)/data:/usr/src/app/data" \
+		kmg1024/diabetes-prediction-analysis:latest
+
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),MINGW64_NT-10.0)
+    DOCKER_PATH := /$(shell echo $(PWD) | sed 's|\\\\|/|g')
+else
+    DOCKER_PATH := $(PWD)
+endif
+
+# Docker 构建目标
+docker-build:
+	docker build --no-cache -t kmg1024/diabetes-prediction-analysis:latest .
+
+docker-run:
+	@echo "Running Docker container to generate the report..."
+	docker run --rm \
+		-v "$(DOCKER_PATH)/report:/usr/src/app/report" \
+		-v "$(DOCKER_PATH)/scripts:/usr/src/app/scripts" \
+		-v "$(DOCKER_PATH)/data:/usr/src/app/data" \
+		kmg1024/diabetes-prediction-analysis:latest
 
 clean:
 	rm -f $(REPORT) figures/*.png tables/*.md tables/*.tex
 
-.PHONY: all clean install_packages install report
+.PHONY: all clean report docker-build docker-run

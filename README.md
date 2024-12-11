@@ -2,7 +2,11 @@
 
 ## Project Overview
 
-This project aims to diagnostically predict whether a patient has diabetes based on various diagnostic measurements. The dataset used originates from the **National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK)**. All patients in this dataset are females, at least 21 years old, and of Pima Indian heritage.
+This project aims to diagnostically predict whether a patient has diabetes based 
+on various diagnostic measurements. The dataset used originates from the 
+**National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK)**. 
+All patients in this dataset are females, at least 21 years old, and of Pima 
+Indian heritage.
 
 ## Dataset Description
 
@@ -55,7 +59,7 @@ Diabetes-Prediction-Analysis/
 │   └── final_report.pdf
 ├── Makefile
 ├── README.md
-├── renv.lock
+├── Dockerfile
 └── .gitignore
 
 ### Code Locations
@@ -92,6 +96,7 @@ Diabetes-Prediction-Analysis/
 - **R** (version 4.x)
 - **RStudio** (optional)
 - **Make** (for automating report generation)
+- **Docker** (for containerizing the environment)
 
 ### R Packages
 
@@ -106,47 +111,80 @@ Diabetes-Prediction-Analysis/
 
 ## Installation
 
-1. **Clone the Repository**
+### Clone the Repository
 
-   ```bash
-   git clone https://github.com/your_username/Diabetes-Prediction-Analysis.git
-   cd Diabetes-Prediction-Analysis
+git clone https://github.com/your_username/Diabetes-Prediction-Analysis.git
+cd Diabetes-Prediction-Analysis
 
-2. **Install Required R Packages**
+### Install Required R Packages
 
-    ```bash
-    make install_packages
-    
-3. **Restore the Package Environment**
+make install_packages
 
-    ```bash
-    make install
+### Restore the Package Environment
+
+make install
+
+### Building the Docker Image
+
+make docker-build
+
+Alternatively, you can manually build it:
+
+docker build -t kmg1024/diabetes-prediction-analysis:latest .
+
+### DockerHub Image Link
+
+The Docker image is publicly available on DockerHub:
+
+https://hub.docker.com/r/kmg1024/diabetes-prediction-analysis
+
+You can pull the image directly from DockerHub:
+
+docker pull kmg1024/diabetes-prediction-analysis:latest
 
 ## Generating the Report
 
-1. Run the Makefile to Generate the Report
+### Using Makefile to Generate the Report
 
-    ```bash
-    make report
+make report
 
-2. Open report/final_report.pdf to view the comprehensive analysis and model evaluation.
+Alternatively, you can run the Docker container directly:
 
-## Cleaning Generated Files
+make docker-run
 
-    ```bash
-    make clean
-    
-## Synchronizing the Package Environment
+### Manual Docker Run
+
+1. Linux/macOS
+
+docker run --rm \
+    -v "$(pwd)/report:/usr/src/app/report" \
+    -v "$(pwd)/scripts:/usr/src/app/scripts" \
+    -v "$(pwd)/data:/usr/src/app/data" \
+    kmg1024/diabetes-prediction-analysis:latest
+
+2. Windows (Using Git Bash)
+
+docker run --rm \
+    -v "/$(pwd)/report:/usr/src/app/report" \
+    -v "/$(pwd)/scripts:/usr/src/app/scripts" \
+    -v "/$(pwd)/data:/usr/src/app/data" \
+    kmg1024/diabetes-prediction-analysis:latest
+
+Note: It is recommended to use the Makefile targets (make report or make docker-run) as they handle the path mounting correctly for different operating systems.
+
+### Cleaning Generated Files
+
+make clean
+
+### Synchronizing the Package Environment
 
 1. Install Required Packages
 
-    ```bash
-    make install_packages
+make install_packages
 
 2. Restore the Environment
 
-    ```bash
-    make install
+make install
 
 ## Contributing
 
