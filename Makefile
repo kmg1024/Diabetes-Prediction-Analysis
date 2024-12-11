@@ -20,7 +20,6 @@ else
     DOCKER_PATH := $(PWD)
 endif
 
-# Docker 构建目标
 docker-build:
 	docker build --no-cache -t kmg1024/diabetes-prediction-analysis:latest .
 
